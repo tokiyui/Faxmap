@@ -42,7 +42,7 @@ jobs:
 
           # 新規・変更されたPNGを取得
           files=( $(git ls-files --others --modified '**/*.png') )
-          batch_size=100
+          batch_size=50
 
           if [ ${#files[@]} -eq 0 ]; then
             echo "No new or modified PNG files to commit."

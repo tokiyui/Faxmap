@@ -38,11 +38,11 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
           git config --global core.compression 0
-          git config --global http.postBuffer 1048576000  # 1GB
+          git config --global http.postBuffer 1073741824000  # 1TB
 
           # 新規・変更されたPNGを取得
           files=( $(git ls-files --others --modified '**/*.png') )
-          batch_size=50
+          batch_size=20
 
           if [ ${#files[@]} -eq 0 ]; then
             echo "No new or modified PNG files to commit."

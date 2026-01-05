@@ -323,7 +323,7 @@ dsp['NewIndex'] = 2 * (dsp['temperature'][np.where(levels == 850)[0][0],:,:] - d
 dsp['Geopotential_height'].data = ndimage.gaussian_filter(dsp['Geopotential_height'].data, sigma=(0, 2, 2))
 dsp['temperature'].data = ndimage.gaussian_filter(dsp['temperature'].data, sigma=(0, 4, 4))
 dsp['temperature'].data = ndimage.gaussian_filter(dsp['temperature'].data, sigma=(0, 6, 6))	
-dsp['ttd'].data = ndimage.gaussian_filter(dsp['ttd'].data, sigma=(0, 2, 2))
+#dsp['ttd'].data = ndimage.gaussian_filter(dsp['ttd'].data, sigma=(0, 2, 2))
 dsp['omega'].data = ndimage.gaussian_filter(dsp['omega'].data, sigma=(0, 2, 2))
 dsp['Equivalent_Potential_temperature'].data = ndimage.gaussian_filter(dsp['Equivalent_Potential_temperature'].data, sigma=(0, 1, 1))
 

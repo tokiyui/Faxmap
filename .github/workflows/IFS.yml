@@ -38,7 +38,7 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
           git config --global core.compression 0
-          git config --global http.postBuffer 1073741824000  # 1TB
+          git config --global http.postBuffer 2097152 # 2GB
 
           # 新規・変更されたPNGを取得
           files=( $(git ls-files --others --modified '**/*.png') )

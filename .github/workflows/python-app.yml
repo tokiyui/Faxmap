@@ -33,6 +33,7 @@ jobs:
           git config --global user.name "${GITHUB_ACTOR}"
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
+          git config --global http.postBuffer 1073741824000  # 1TB
           shopt -s globstar nullglob
           git add **/*.png
           if git diff --cached --quiet; then

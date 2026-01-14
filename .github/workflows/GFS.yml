@@ -1,4 +1,4 @@
-name: Test application
+name: GFS application
 
 on:
   workflow_dispatch:
@@ -8,18 +8,20 @@ permissions:
   checks: write
   contents: write
 
+concurrency:
+  group: image-push-main
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリのチェックアウト
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # フル履歴を取得
+          fetch-depth: 0
 
-      # Python環境と依存ライブラリのインストール
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -27,36 +29,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pygrib metpy cartopy siphon
 
-      # プロットスクリプトを実行
       - name: Run plotting scripts
         run: python GFS.py
 
-      # PNG画像をバッチコミットしてpush
-      - name: Commit and push PNG images in batches
+      - name: Commit and push PNG images
         run: |
           git config --global user.name "${GITHUB_ACTOR}"
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
-          git config --global core.compression 6
-          git config --global http.postBuffer 2097152 # 2GB
-          ls -l
+          git config --global core.compression 0
 
-          # 新規・変更されたPNGを取得
           files=( $(git ls-files --others --modified '**/*.png') )
-          batch_size=8
 
           if [ ${#files[@]} -eq 0 ]; then
             echo "No new or modified PNG files to commit."
             exit 0
           fi
 
-          # 100枚ずつバッチコミット
-          for ((i=0; i<${#files[@]}; i+=batch_size)); do
-            batch=( "${files[@]:i:batch_size}" )
-            git add "${batch[@]}"
+          git add "${files[@]}"
+          git commit -m "Update GFS images ($(date -u +%Y%m%d%H))"
 
-            if ! git diff --cached --quiet; then
-              git commit -m "Add GFS images batch $((i/batch_size+1))"
-              git push origin main --force
-            fi
-          done
+          git pull --rebase origin main
+          git push origin main

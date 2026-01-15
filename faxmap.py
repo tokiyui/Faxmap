@@ -187,9 +187,9 @@ lonE=170
  
 # データの格納先フォルダー名
 ##!!! GRIB2データの保存先をFolderを指定すること !!!
-data_fld="https://data.ecmwf.int/ecpds/home/opendata/{0:04d}{1:02d}{2:02d}/{3:02d}z/ifs/0p25/oper/"
+data_fld="https://storage.googleapis.com/ecmwf-open-data/{0:04d}{1:02d}{2:02d}/{3:02d}z/ifs/0p25/oper/"
 dat_fld=data_fld.format(i_year,i_month,i_day,i_hourZ)
- 
+
 # 読み込むGRIB2形式GSMのファイル名
 gsm_fn_t="{0:4d}{1:02d}{2:02d}{3:02d}0000-12h-oper-fc.grib2"
 fname_gfs = gsm_fn_t.format(i_year,i_month,i_day,i_hourZ)

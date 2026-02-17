@@ -29,6 +29,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pygrib metpy cartopy siphon
 
+      - name: Cleanup old IFS directories (older than 100 hours)
+        run: |
+          echo "=== IFS cleanup start ==="
+          if [ -d IFS ]; then
+            find IFS/* -maxdepth 0 -type d -mmin +6000 -print -exec rm -rf {} \;
+          else
+            echo "IFS directory does not exist."
+          fi
+          echo "=== IFS cleanup end ==="
+          
       - name: Run plotting scripts
         run: python IFS.py
 

@@ -32,7 +32,7 @@ jobs:
       - name: Cleanup old IFS directories (older than 100 hours)
         run: |
           echo "=== IFS cleanup start ==="
-          !ls -l
+          ls -l
           if [ -d IFS ]; then
             find IFS/* -maxdepth 0 -type d -mmin +6000 -print -exec rm -rf {} \;
           else

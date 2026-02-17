@@ -34,7 +34,7 @@ jobs:
           echo "=== GFS cleanup start ==="
           ls -l
           if [ -d GFS ]; then
-            find GFS/* -maxdepth 0 -type d -mmin +6000 -print -exec rm -rf {} \;
+            find GFS/* -maxdepth 2 -mmin +6000 -print -exec rm -rf {} \;
           else
             echo "GFS directory does not exist."
           fi

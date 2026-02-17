@@ -32,6 +32,7 @@ jobs:
       - name: Cleanup old GFS directories (older than 100 hours)
         run: |
           echo "=== GFS cleanup start ==="
+          !ls -l
           if [ -d GFS ]; then
             find GFS/* -maxdepth 0 -type d -mmin +6000 -print -exec rm -rf {} \;
           else

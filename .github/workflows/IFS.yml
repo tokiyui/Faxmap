@@ -34,7 +34,7 @@ jobs:
           echo "=== IFS cleanup start ==="
           ls -l
           if [ -d IFS ]; then
-            find IFS/* -maxdepth 2 -type d -mmin +6000 -print -exec rm -rf {} \;
+            find IFS/* -maxdepth 2 -mmin +6000 -print -exec rm -rf {} \;
           else
             echo "IFS directory does not exist."
           fi

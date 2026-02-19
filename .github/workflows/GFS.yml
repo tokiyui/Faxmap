@@ -29,16 +29,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pygrib metpy cartopy siphon
 
-      - name: Cleanup old GFS directories (older than 100 hours)
+      - name: Cleanup old GFS directories
         run: |
-          echo "=== GFS cleanup start ==="
-          ls -l
-          if [ -d GFS ]; then
-            find GFS -mindepth 1 -maxdepth 1 -type d ! -newermt "100 hours ago" -print -exec rm -rf {} +
-          else
-            echo "GFS directory does not exist."
-          fi
-          echo "=== GFS cleanup end ==="
+          [ -d GFS ] || exit 0
+          now=$(date -u +%s)
+          for d in GFS/*UTC; do
+            [ -d "$d" ] || continue
+            t=$(date -u -d "${d##*/UTC}" +%s)
+            (( (now - t) / 3600 >= 100 )) && rm -rf "$d"
+          done
           
       - name: Run plotting scripts
         run: python GFS.py

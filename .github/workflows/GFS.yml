@@ -29,14 +29,30 @@ jobs:
           python -m pip install --upgrade pip
           pip install numpy pygrib metpy cartopy siphon
 
-      - name: Cleanup old GFS directories
+      - name: Cleanup old GFS directories (older than 100 hours)
+        shell: bash
         run: |
+          set -e
+
+          # GFS ディレクトリが無ければ終了
           [ -d GFS ] || exit 0
+
+          # 現在の UTC 時刻（epoch 秒）
           now=$(date -u +%s)
+
+          # GFS/YYYYMMDDHHUTC を走査
           for d in GFS/*UTC; do
             [ -d "$d" ] || continue
-            t=$(date -u -d "${d##*/UTC}" +%s)
-            (( (now - t) / 3600 >= 100 )) && rm -rf "$d"
+
+            name=$(basename "$d")   # 2026012906UTC
+            ymdh=${name%UTC}        # 2026012906
+
+            t=$(date -u -d "${ymdh:0:8} ${ymdh:8:2}:00" +%s)
+
+            # 100時間以上前なら削除
+            if (( (now - t) / 3600 >= 100 )); then
+              rm -rf "$d"
+            fi
           done
           
       - name: Run plotting scripts

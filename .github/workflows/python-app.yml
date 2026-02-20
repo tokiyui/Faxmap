@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # force push 前提
+          fetch-depth: 1   # force push 前提
 
       - name: Install dependencies
         run: |

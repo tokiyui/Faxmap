@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>実況天気図</title>
+
+<style>
+body { margin: 0; font-family: sans-serif; }
+.container { display: flex; height: 100vh; }
+
+/* ---- sidebar ---- */
+.sidebar {
+  width: 27%;
+  height: auto;
+  background-color: #f0f0f0;
+  padding: 1em;
+  box-sizing: border-box;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sidebar img {
+  width: 100%;
+  height: auto;
+  margin-top: 1em;
+  border: 1px solid #ccc;
+}  
+.sidebar h3,
+.sidebar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: flex-start;
+}
+.sidebar table {
+  width: 100%;
+}
+select { width: 60%; margin-top: 0.5em; }
+  
+/* ---- main ---- */
+.main {
+  width: 72%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.main img {
+  width: 670px;
+  height: 500px;
+  object-fit: contain;
+  border: 1px solid #ccc;
+}
+
+/* ---- table ---- */
+table {
+  border-collapse: collapse;
+  margin-top: 1em;
+  width: 100%;
+}
+th, td {
+  border: 1px solid #666;
+  padding: 4px 6px;
+  text-align: right;
+  font-size: 12px;
+}
+th { background: #eee; }
+caption {
+  text-align: left;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- ================= sidebar ================= -->
+<div class="sidebar">
+  <h3><span id="time-label"></span> UTC
+  <select id="stationSelect">
+    <option value="47401">稚内</option>
+    <option value="47412">札幌</option>
+    <option value="47418">釧路</option>
+    <option value="47582">秋田</option>
+    <option value="47600">輪島</option>
+    <option value="47646" selected>館野</option>
+    <option value="47678">八丈島</option>
+    <option value="47741">松江</option>
+    <option value="47778">潮岬</option>
+    <option value="47807">福岡</option>
+    <option value="47827">鹿児島</option>
+    <option value="47909">名瀬</option>
+    <option value="47918">石垣島</option>
+    <option value="47945">南大東島</option>
+    <option value="47971">父島</option>
+    <option value="47991">南鳥島</option>
+  </select>
+  </h3>
+
+  <table id="result">
+    <caption>高層気温（観測 − 平年）</caption>
+    <thead>
+      <tr>
+        <th>hPa</th>
+        <th>観測(℃)</th>
+        <th>平年(℃)</th>
+        <th>差</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <img id="emagram" alt="エマグラム">
+</div>
+  
+<!-- ================= main ================= -->
+<div class="main" id="imageGrid"></div>
+
+</div>
+
+<script>
+/* =========================================================
+   時刻決定（既存ロジック）
+========================================================= */
+const now = new Date();
+const utcMinus2h = new Date(now.getTime() - 2*3600*1000);
+let hour = utcMinus2h.getUTCHours();
+hour = hour < 12 ? 0 : 12;
+
+const yyyy = utcMinus2h.getUTCFullYear();
+const MM = String(utcMinus2h.getUTCMonth()+1).padStart(2,'0');
+const dd = String(utcMinus2h.getUTCDate()).padStart(2,'0');
+const HH = String(hour).padStart(2,'0');
+
+const latestTime = `${yyyy}${MM}${dd}${HH}`;
+document.getElementById("time-label").textContent = latestTime;
+
+/* =========================================================
+   Fax画像
+========================================================= */
+const suffixes = [
+  "_surf.png","_500ttd.png","_850ept.png","_700ttd.png",
+  "_300ttd.png","_400ttd.png","_850ttd.png","_925ttd.png"
+];
+
+const grid = document.getElementById("imageGrid");
+suffixes.forEach(s=>{
+  const img = document.createElement("img");
+  img.src = `./Data/${latestTime}UTC/${latestTime}UTC${s}`;
+  grid.appendChild(img);
+});
+
+/* =========================================================
+   エマグラム
+========================================================= */
+const emagramImg = document.getElementById("emagram");
+const stationSelect = document.getElementById("stationSelect");
+
+/* =========================================================
+   高層気温比較
+========================================================= */
+const TARGET_LEVELS = [300,500,700,850,925];
+const proxy = "https://worker.ryohorita105.workers.dev/?url=";
+
+const pressureCols = [
+  1000,925,900,850,800,700,600,500,400,350,
+  300,250,200,175,150,125,100,70,50,40,
+  30,20,15,10,5
+];
+
+async function updateAll() {
+  const stn = stationSelect.value;
+
+  /* ---- エマグラム ---- */
+  emagramImg.src = `./Data/${latestTime}UTC/${stn}_${latestTime}.png`;
+
+  /* ---- 高層気温 ---- */
+  const yyyyN = yyyy, mmN = parseInt(MM), ddN = parseInt(dd), hhN = parseInt(HH);
+  const utcDate = new Date(Date.UTC(yyyyN,mmN-1,ddN,hhN));
+  const jstDate = new Date(utcDate.getTime()+9*3600*1000);
+
+  const obsUrl =
+    `https://weather.uwyo.edu/wsgi/sounding?datetime=${yyyyN}-${MM}-${dd}%20${HH}:00:00&id=${stn}&src=FM35&type=TEXT:LIST`;
+
+  const nmlUrl =
+    `https://www.data.jma.go.jp/stats/etrn/upper/view/nml_snd_d.php?year=&month=${jstDate.getUTCMonth()+1}&day=&hour=${jstDate.getUTCHours()}&point=${stn}&atm=&view=s`;
+
+  const [obsText,nmlHTML] = await Promise.all([
+    fetch(proxy+encodeURIComponent(obsUrl)).then(r=>r.text()),
+    fetch(nmlUrl).then(r=>r.text())
+  ]);
+
+  const obs = parseWyoming(obsText);
+  const doc = parseHTML(nmlHTML);
+
+  const tbody = document.querySelector("#result tbody");
+  tbody.innerHTML = "";
+
+  for (const p of TARGET_LEVELS) {
+    const o = obs[p];
+    const n = getNmlTemp(doc,jstDate.getUTCDate(),p);
+    const d = (o!=null && n!=null) ? (o-n).toFixed(1) : "";
+    tbody.innerHTML += `<tr>
+      <th>${p}</th><td>${o??""}</td><td>${n??""}</td><td>${d}</td>
+    </tr>`;
+  }
+}
+
+/* ---- parsers ---- */
+function parseWyoming(text){
+  const m={};
+  text.split("\n").forEach(l=>{
+    if(/^\s*\d+\.\d/.test(l)){
+      const c=l.trim().split(/\s+/);
+      const p=Math.round(parseFloat(c[0]));
+      const t=parseFloat(c[2]);
+      if(TARGET_LEVELS.includes(p)&&!isNaN(t)) m[p]=t;
+    }
+  });
+  return m;
+}
+function parseHTML(html){
+  const d=document.implementation.createHTMLDocument("");
+  d.documentElement.innerHTML=html;
+  return d;
+}
+function getNmlTemp(doc,day,p){
+  const table=doc.querySelector("#tablefix1");
+  if(!table) return null;
+  const col=pressureCols.indexOf(p);
+  for(const r of table.querySelectorAll("tr.mtx")){
+    const m=r.querySelector("th")?.textContent.match(/^(\d+)日$/);
+    if(m && +m[1]===day){
+      const td=r.querySelectorAll("td")[col];
+      if(!td||td.textContent.trim()==="///") return null;
+      return parseFloat(td.textContent);
+    }
+  }
+  return null;
+}
+
+/* ---- 初期 & 変更 ---- */
+updateAll();
+stationSelect.addEventListener("change",updateAll);
+</script>
+</body>
+</html>

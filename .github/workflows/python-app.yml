@@ -1,0 +1,56 @@
+name: Python application
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  checks: write
+  contents: write
+
+concurrency:
+  group: image-push-main
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1   # force push 前提
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+          python -m pip install --upgrade pip
+          pip install "matplotlib==3.8.4"
+          pip install numpy pygrib metpy cartopy siphon scikit-image
+
+      - name: Run plotting scripts
+        run: |
+          python faxmap.py
+          python emagram.py
+
+      - name: Commit and push PNG images
+        run: |
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}
+
+          # ★ 安定化設定
+          git config --global core.compression 6
+          git config --global http.postBuffer 1073741824
+
+          shopt -s globstar nullglob
+          git add **/*.png
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add Pictures"
+            git push origin main --force-with-lease
+          fi
